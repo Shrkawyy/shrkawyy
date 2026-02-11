@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProtonX-Private update 1.3</title>          
+  <link rel="icon" href="./assets/images/icon.ico" type="image/x-icon">
+  <link href="./assets/css/main.css" rel="stylesheet">
+  <link href="./assets/css/ui-2d.css" rel="stylesheet">
+  <link href="./assets/css/settings-2d.css" rel="stylesheet">
+
+  <!-- Skip link for accessibility -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+
+
+
+
+<div id="update-notification" class="update-notification hidden">
+    <div class="update-notification-content">
+      <div class="update-notification-header">
+        <i class="fas fa-bell"></i>
+        <h3>Small Update Available!</h3>
+      </div>
+      <div class="update-notification-body">
+        <p id="update-message">Hey Player, Update 1.3 is out enjoy! If you get any bugs info me.</p>
+      </div>
+      <div class="update-notification-actions">
+        <button id="update-ok-btn" class="update-btn">OK</button>
+        <button id="update-info-btn" class="update-btn secondary">View Updates</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="info-panel" class="info-panel hidden">
+    <div class="info-panel-close" id="info-panel-close">✕</div>
+    <h3>Recent Updates</h3>
+    <div id="info-owner" class="info-owner"></div>
+    <div class="info-content" style="min-height:60px;color:#ddd;padding-top:8px;"></div>
+  </div>
+  
+</head>
+  <style>
+    /* Skin gallery plus button and modal styles */
+    .bar-circle-outer { position: relative; }
+    #open-skin-gallery-btn {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(180deg,#3b82f6,#1e40af);
+      color: #fff;
+      font-size: 20px;
+      line-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      z-index: 9999;
+    }
+
+    /* Modal */
+    #skin-gallery-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 100000; }
+    #skin-gallery-modal.visible { display: flex; }
+    #skin-gallery-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.6); }
+    #skin-gallery-panel { position: relative; width: 820px; max-width: calc(100% - 40px); background: #0f0f10; border-radius: 8px; padding: 16px; z-index: 2; box-shadow: 0 8px 30px rgba(0,0,0,0.7); }
+    #skin-gallery-panel h3 { margin: 0 0 8px 0; }
+    .skin-gallery-tabs { display:flex; gap:8px; margin-bottom:12px; }
+    .skin-gallery-tab { padding:8px 12px; cursor:pointer; background:#111; border-radius:6px; color:#ddd; }
+    .skin-gallery-tab.active { background:#1e40af; color:#fff; }
+    .skin-gallery-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:10px; max-height:420px; overflow:auto; }
+    .skin-thumb { background:#222; border-radius:6px; padding:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .skin-thumb img { max-width:100%; max-height:88px; object-fit:cover; border-radius:4px; }
+    .skin-gallery-actions { margin-top:12px; display:flex; justify-content:flex-end; gap:8px; }
+    .skin-gallery-close { background:#333; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
+  </style>
+<body>
+
+  
+  <style>
+    #spectate {
+      margin-right: 50px;
+    }
+    #play {
+      margin-left: 70px;
+    }
+
+    .info-tabs {
+      display: flex;
+      gap: 8px;
+      margin: 10px 0 8px;
+    }
+
+    .info-tab-btn {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e8e8e8;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+    }
+
+    .info-tab-btn:hover {
+      background: rgba(255, 255, 255, 0.10);
+      border-color: rgba(255, 255, 255, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .info-tab-btn.active {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .info-tab-content { display: none; }
+    .info-tab-content.active { display: block; }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+  </style>
+
+  
+  <canvas id="game-display"></canvas>
+
+
+  <div id="hud-display" class="pointer-events-none visible">
+    <canvas id="leaderboard-canvas" width="200"></canvas>
+  </div>
+  <canvas id="minimap-canvas"></canvas>
+
+  <div id="stats-display" class="pointer-events-none">
+    <div class="stats-container">
+      <div class="stat-item" id="stats-ping-parent">
+        <div class="stat-label">PING 1</div>
+        <div class="stat-value">--</div>
+      </div>
+      <div class="stat-item" id="stats-ping-child">
+        <div class="stat-label">PING 2</div>
+        <div class="stat-value">--</div>
+      </div>
+      <div class="stat-item" id="stats-fps">
+        <div class="stat-label">FPS</div>
+        <div class="stat-value">--</div>
+      </div>
+      <div class="stat-item" id="stats-mass">
+        <div class="stat-label">MASS</div>
+        <div class="stat-value">--</div>
+      </div>
+      <div class="stat-item" id="stats-render">
+        <div class="stat-label">RENDER</div>
+        <div class="stat-value">--</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="recording-timer" class="pointer-events-none hidden" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); color: #e2e2e2; background: rgba(20, 20, 20, 0.85); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 18px; padding: 12px 20px; font-family: 'Ubuntu', system-ui, sans-serif; font-size: 14px; font-weight: 500; z-index: 9999; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), inset 0 0 25px rgba(255, 255, 255, 0.03); backdrop-filter: blur(14px);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div id="recording-indicator" style="width: 8px; height: 8px; background: #ff4444; border-radius: 50%; animation: pulse 1s infinite;"></div>
+      <span style="color: #ff4444; font-weight: 600;">● REC</span>
+      <span id="recording-time" style="color: #e2e2e2;">00:00:00</span>
+    </div>
+  </div>
+
+  <div id="menu-display" class="pointer-events-all visible">
+    
+    <div class="zynx-logo-container">
+      <img src="./assets/images/ProtonX.png" alt="ProtonX Logo" class="zynx-logo">
+    </div>
+    
+    
+    <div id="menu-info-button" class="bar-button info-button" title="Updates">
+      <i class="fas fa-info-circle"></i>
+      <div class="text"><span>Info</span></div>
+    </div>
+    <div id="menu-display-center">
+       
+        <div class="control-bar-container">
+          <div class="back-background-bar"></div>
+          <div class="background-bar"></div>
+          <div class="control-bar">
+            <div class="bar-extension-left"></div>
+            <div class="bar-button" id="open-settings">
+              <i class="fas fa-cog"></i>
+              <div class="text"><span>Settings</span></div>
+            </div>
+            
+            <div class="bar-circle-outer">
+              <div class="skin-preview" id="skin-preview"></div>
+              <button id="open-skin-gallery-btn" title="Open skins" aria-label="Open skins" type="button">+</button>
+            </div>
+            
+            <div class="bar-button" id="spectate">
+              <i class="fa-solid fa-eye"></i>
+              <div class="text"><span>Spectate</span></div>
+            </div>
+            
+            <div class="bar-button" id="play">
+              <i class="fas fa-play"></i>
+              <div class="text"><span>Play</span></div>
+            </div>
+            
+            <div class="bar-button" id="restart">
+              <i class="fas fa-redo-alt"></i>
+              <div class="text"><span>Refresh</span></div>
+            </div>
+            <div class="bar-extension-right"></div>
+          </div>
+        </div>
+      <div class="menu-container">
+          <div class="player-inputs">
+            <input id="tag" class="form-control input-tag" placeholder="Tag" maxlength="5">
+            <input id="nickname" class="form-control input-nickname" placeholder="Nickname" maxlength="15">
+            <input id="nickname2" class="form-control input-nickname" placeholder="Nickname 2" maxlength="15">
+            <div class="skin-row">
+              <input id="customSkin1" class="form-control input-skin" placeholder="Skin1 URL" maxlength="300">
+              <input id="customSkin2" class="form-control input-skin" placeholder="Skin2 URL" maxlength="300">
+            </div>
+          </div>
+        <div class="server-select">
+          <select class="server-select-input" id="servers">
+            <option value="wss://eu.senpa.io:2001/" selected>[EU FFA] Nemesis</option>
+            <option value="wss://eu.senpa.io:5002/">[EU] selfish</option>
+          </select>   
+        </div>
+        <!-- info-panel moved out of menu to avoid being hidden by menu DOM changes -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Display -->
+  <div id="settings-display" class="pointer-events-all hidden">
+    <div id="settings-display-center">
+      <div id="settings">
+        <div id="settings-close-btn">✘</div>
+        
+        <!-- New Settings Layout -->
+        <div class="settings-sidebar">
+          <div class="sidebar-tab active" data-tab="game-settings">
+            <i class="fas fa-cog"></i>
+            <span>Game</span>
+          </div>
+          <div class="sidebar-tab" data-tab="theme">
+            <i class="fas fa-palette"></i>
+            <span>Theme</span>
+          </div>
+          <div class="sidebar-tab" data-tab="controls">
+            <i class="fas fa-keyboard"></i>
+            <span>Controls</span>
+          </div>
+          <div class="sidebar-tab" data-tab="mouse">
+            <i class="fas fa-mouse"></i>
+            <span>Mouse</span>
+          </div>
+        </div>
+        
+        <div class="settings-content">
+          <div class="tab-content active" id="game-settings">
+            <div class="content-grid">
+              <div class="option">
+                <span>Animation delay: <span class="slider-value" id="animationDelayValue">25</span></span>
+                <input type="range" class="setting-slider" id="animationDelay" min="1" max="300" value="25">
+              </div>
+              <div class="option">
+                <span>Cell transparency: <span class="slider-value" id="cellTransparencyValue">1</span></span>
+                <input type="range" class="setting-slider" id="cellTransparency" min="0.2" max="1" value="1" step="0.1">
+              </div>
+              <div class="option">
+                <span>Nicknames</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showNicknames">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Color Names</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="colorNames">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Mass</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showMass">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Skins</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showSkins">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Grid</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showGrid">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Sectors</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showSectors">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Show pellets</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showPellets">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Cursor tracker</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showCursorLines">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Debug mode</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showDebug">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Arrow Rings</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="arrowRings">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Auto-shift multibox</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="autoShiftMultibox">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Screen recording</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="screenRecordingEnabled">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>3D Effect</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="enable3DEffect">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Background</span>
+                <input type="text" id="BACKGROUND" placeholder="PUT A LINK" value="https://i.imgur.com/aKvo1jQ.png" />
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-content" id="theme">
+            <div class="content-grid">
+              <div class="option">
+                <span>Cell Color</span>
+                <input type="color" id="cellColorSelect" value="#0a414e">
+                <button id="cellColorDefaultBtn">Default</button>
+              </div>
+              <div class="option">
+                <span>Multibox Ring Color</span>
+                <input type="color" id="multiboxRingColor" value="#0a414e">
+              </div>
+              <div class="option">
+                <span>Arrow Color</span>
+                <input type="color" id="arrowColor" value="#FFFFFF">
+              </div>
+              <div class="option">
+                <span>Arrow Size: <span class="slider-value" id="arrowSizeValue">430px</span></span>
+                <input type="range" class="setting-slider" id="arrowSize" min="50" max="1000" value="430">
+              </div>
+              <div class="option" id="cursorLinesColorOption" style="display: none;">
+                <span>Cursor line color</span>
+                <input type="color" id="cursorLinesColor" value="#FFFFFF">
+              </div>
+              <div class="option">
+                <span>Button Hover</span>
+                <input type="color" id="buttonHover" value="#3a3a3a">
+              </div>
+              <div class="option">
+                <span>Text Color</span>
+                <input type="color" id="textColor" value="#ffffff">
+              </div>
+              <div class="option">
+                <span>Accent Color</span>
+                <input type="color" id="accentColor" value="#3b82f6">
+              </div>
+              <div class="option">
+                <span>Menu Width: <span class="slider-value" id="menuWidthValue">1200px</span></span>
+                <input type="range" class="setting-slider" id="menuWidth" min="400" max="2000" value="1200">
+              </div>
+              <div class="option">
+                <span>Menu Height: <span class="slider-value" id="menuHeightValue">492px</span></span>
+                <input type="range" class="setting-slider" id="menuHeight" min="400" max="1000" value="492">
+              </div>
+              <div class="option">
+                <span>Border Radius: <span class="slider-value" id="borderRadiusValue">0px</span></span>
+                <input type="range" class="setting-slider" id="borderRadius" min="0" max="50" value="0">
+              </div>
+              <div class="option">
+                <button id="resetThemeBtn">Reset Theme</button>
+                <button id="resetThemeBtnNew" style="margin-left: 10px; background: #ff6b6b;">Fix Reset (1200x492x0)</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-content" id="controls">
+            <div class="content-grid">
+              <div class="option">
+                <span>Macro feed</span>
+                <input id="macroFeedKey" class="hotkey-input" value="KeyE" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Split</span>
+                <input id="splitKey" class="hotkey-input" value="Space" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Doublesplit</span>
+                <input id="doubleSplitKey" class="hotkey-input" value="KeyQ" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Tricksplit</span>
+                <input id="tricksplitKey" class="hotkey-input" value="ShiftLeft" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Switch player</span>
+                <input id="switchPlayerkey" class="hotkey-input" value="Tab" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Toggle background</span>
+                <input id="toggleBackgroundKey" class="hotkey-input" value="KeyB" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Toggle ChatHud</span>
+                <input id="toggleChatHUDKey" class="hotkey-input" value="KeyP" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Line split</span>
+                <input id="lineSplitKey" class="hotkey-input" value="KeyF" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Start recording</span>
+                <input id="startRecordingKey" class="hotkey-input" value="KeyK" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Stop recording</span>
+                <input id="stopRecordingKey" class="hotkey-input" value="KeyL" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-content" id="mouse">
+            <div class="content-grid">
+              <div class="option">
+                <span>Left click</span>
+                <select class="mouseActions" id="leftClick">
+                  <option value="noAction">No action</option>
+                  <option value="macroFeed">Macro Feed</option>
+                  <option value="split">Split</option>
+                  <option value="doubleSplit">Doublesplit</option>
+                  <option value="tricksplit">Tricksplit</option>
+                  <option value="lineSplit">Line split</option>
+                  <option value="switchPlayer">Switch player</option>
+                </select>
+              </div>
+              <div class="option">
+                <span>Middle click</span>
+                <select class="mouseActions" id="middleClick">
+                  <option selected value="noAction">No action</option>
+                  <option value="macroFeed">Macro Feed</option>
+                  <option value="split">Split</option>
+                  <option value="doubleSplit">Doublesplit</option>
+                  <option value="tricksplit">Tricksplit</option>
+                  <option value="lineSplit">Line split</option>
+                  <option value="switchPlayer">Switch player</option>
+                </select>
+              </div>
+              <div class="option">
+                <span>Right click</span>
+                <select class="mouseActions" id="rightClick">
+                  <option selected value="noAction">No action</option>
+                  <option value="macroFeed">Macro Feed</option>
+                  <option value="split">Split</option>
+                  <option value="doubleSplit">Doublesplit</option>
+                  <option value="tricksplit">Tricksplit</option>
+                  <option value="lineSplit">Line split</option>
+                  <option value="switchPlayer">Switch player</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Gallery Display -->
+  <div id="gallery-display" class="pointer-events-all hidden">
+    <div id="gallery-display-center">
+      <div id="gallery">
+        <div id="settings-close-btn">✘</div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <script src="./loader.js"></script>
+</body>
+</html>
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProtonX-Private update 1.3</title>          
+  <link rel="icon" href="./assets/images/icon.ico" type="image/x-icon">
+  <link href="./assets/css/main.css" rel="stylesheet">
+  <link href="./assets/css/ui-2d.css" rel="stylesheet">
+  <link href="./assets/css/settings-2d.css" rel="stylesheet">
+
+  <!-- Skip link for accessibility -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+
+
+
+
+<div id="update-notification" class="update-notification hidden">
+    <div class="update-notification-content">
+      <div class="update-notification-header">
+        <i class="fas fa-bell"></i>
+        <h3>Small Update Available!</h3>
+      </div>
+      <div class="update-notification-body">
+        <p id="update-message">Hey Player, Update 1.3 is out enjoy! If you get any bugs info me.</p>
+      </div>
+      <div class="update-notification-actions">
+        <button id="update-ok-btn" class="update-btn">OK</button>
+        <button id="update-info-btn" class="update-btn secondary">View Updates</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="info-panel" class="info-panel hidden">
+    <div class="info-panel-close" id="info-panel-close">✕</div>
+    <h3>Recent Updates</h3>
+    <div id="info-owner" class="info-owner"></div>
+    <div class="info-content" style="min-height:60px;color:#ddd;padding-top:8px;"></div>
+  </div>
+  
+</head>
+<body>
+
+  
+  <style>
+    #spectate {
+      margin-right: 50px;
+    }
+    #play {
+      margin-left: 70px;
+    }
+
+    .info-tabs {
+      display: flex;
+      gap: 8px;
+      margin: 10px 0 8px;
+    }
+
+    .info-tab-btn {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e8e8e8;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+    }
+
+    .info-tab-btn:hover {
+      background: rgba(255, 255, 255, 0.10);
+      border-color: rgba(255, 255, 255, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .info-tab-btn.active {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .info-tab-content { display: none; }
+    .info-tab-content.active { display: block; }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+  </style>
+
+  
+  <canvas id="game-display"></canvas>
+
+
+  <div id="hud-display" class="pointer-events-none visible">
+    <canvas id="leaderboard-canvas" width="200"></canvas>
+  </div>
+  <canvas id="minimap-canvas"></canvas>
+
+  <div id="stats-display" class="pointer-events-none">
+    <div class="stats-container">
+      <div class="stat-item" id="stats-ping-parent">
+        <div class="stat-label">PING 1</div>
+        <div class="stat-value">--</div>
+      </div>
+      <div class="stat-item" id="stats-ping-child">
+        <div class="stat-label">PING 2</div>
+        <div class="stat-value">--</div>
+      </div>
+      <div class="stat-item" id="stats-fps">
+        <div class="stat-label">FPS</div>
+        <div class="stat-value">--</div>
+      </div>
+      <div class="stat-item" id="stats-mass">
+        <div class="stat-label">MASS</div>
+        <div class="stat-value">--</div>
+      </div>
+      <div class="stat-item" id="stats-render">
+        <div class="stat-label">RENDER</div>
+        <div class="stat-value">--</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="recording-timer" class="pointer-events-none hidden" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); color: #e2e2e2; background: rgba(20, 20, 20, 0.85); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 18px; padding: 12px 20px; font-family: 'Ubuntu', system-ui, sans-serif; font-size: 14px; font-weight: 500; z-index: 9999; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), inset 0 0 25px rgba(255, 255, 255, 0.03); backdrop-filter: blur(14px);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div id="recording-indicator" style="width: 8px; height: 8px; background: #ff4444; border-radius: 50%; animation: pulse 1s infinite;"></div>
+      <span style="color: #ff4444; font-weight: 600;">● REC</span>
+      <span id="recording-time" style="color: #e2e2e2;">00:00:00</span>
+    </div>
+  </div>
+
+  <div id="menu-display" class="pointer-events-all visible">
+    
+    <div class="zynx-logo-container">
+      <img src="./assets/images/ProtonX.png" alt="ProtonX Logo" class="zynx-logo">
+    </div>
+    
+    
+    <div id="menu-info-button" class="bar-button info-button" title="Updates">
+      <i class="fas fa-info-circle"></i>
+      <div class="text"><span>Info</span></div>
+    </div>
+    <div id="menu-display-center">
+       
+        <div class="control-bar-container">
+          <div class="back-background-bar"></div>
+          <div class="background-bar"></div>
+          <div class="control-bar">
+            <div class="bar-extension-left"></div>
+            <div class="bar-button" id="open-settings">
+              <i class="fas fa-cog"></i>
+              <div class="text"><span>Settings</span></div>
+            </div>
+            
+            <div class="bar-circle-outer">
+              <div class="skin-preview" id="skin-preview"></div>
+            </div>
+            
+            <div class="bar-button" id="spectate">
+              <i class="fa-solid fa-eye"></i>
+              <div class="text"><span>Spectate</span></div>
+            </div>
+            
+            <div class="bar-button" id="play">
+              <i class="fas fa-play"></i>
+              <div class="text"><span>Play</span></div>
+            </div>
+            
+            <div class="bar-button" id="restart">
+              <i class="fas fa-redo-alt"></i>
+              <div class="text"><span>Refresh</span></div>
+            </div>
+            <div class="bar-extension-right"></div>
+          </div>
+        </div>
+      <div class="menu-container">
+          <div class="player-inputs">
+            <input id="tag" class="form-control input-tag" placeholder="Tag" maxlength="5">
+            <input id="nickname" class="form-control input-nickname" placeholder="Nickname" maxlength="15">
+            <input id="nickname2" class="form-control input-nickname" placeholder="Nickname 2" maxlength="15">
+            <div class="skin-row">
+              <input id="customSkin1" class="form-control input-skin" placeholder="Skin1 URL" maxlength="300">
+              <input id="customSkin2" class="form-control input-skin" placeholder="Skin2 URL" maxlength="300">
+            </div>
+          </div>
+        <div class="server-select">
+          <select class="server-select-input" id="servers">
+            <option value="wss://eu.senpa.io:2001/" selected>[EU FFA] Nemesis</option>
+            <option value="wss://eu.senpa.io:5002/">[EU] selfish</option>
+          </select>   
+        </div>
+        <!-- info-panel moved out of menu to avoid being hidden by menu DOM changes -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Display -->
+  <div id="settings-display" class="pointer-events-all hidden">
+    <div id="settings-display-center">
+      <div id="settings">
+        <div id="settings-close-btn">✘</div>
+        
+        <!-- New Settings Layout -->
+        <div class="settings-sidebar">
+          <div class="sidebar-tab active" data-tab="game-settings">
+            <i class="fas fa-cog"></i>
+            <span>Game</span>
+          </div>
+          <div class="sidebar-tab" data-tab="theme">
+            <i class="fas fa-palette"></i>
+            <span>Theme</span>
+          </div>
+          <div class="sidebar-tab" data-tab="controls">
+            <i class="fas fa-keyboard"></i>
+            <span>Controls</span>
+          </div>
+          <div class="sidebar-tab" data-tab="mouse">
+            <i class="fas fa-mouse"></i>
+            <span>Mouse</span>
+          </div>
+        </div>
+        
+        <div class="settings-content">
+          <div class="tab-content active" id="game-settings">
+            <div class="content-grid">
+              <div class="option">
+                <span>Animation delay: <span class="slider-value" id="animationDelayValue">25</span></span>
+                <input type="range" class="setting-slider" id="animationDelay" min="1" max="300" value="25">
+              </div>
+              <div class="option">
+                <span>Cell transparency: <span class="slider-value" id="cellTransparencyValue">1</span></span>
+                <input type="range" class="setting-slider" id="cellTransparency" min="0.2" max="1" value="1" step="0.1">
+              </div>
+              <div class="option">
+                <span>Nicknames</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showNicknames">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Color Names</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="colorNames">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Mass</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showMass">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Skins</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showSkins">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Grid</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showGrid">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Sectors</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showSectors">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Show pellets</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showPellets">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Cursor tracker</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showCursorLines">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Debug mode</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showDebug">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Arrow Rings</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="arrowRings">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Auto-shift multibox</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="autoShiftMultibox">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Screen recording</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="screenRecordingEnabled">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>3D Effect</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="enable3DEffect">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="option">
+                <span>Imgur Background Link</span>
+                <input type="text" id="BACKGROUND" placeholder="Enter Imgur image URL (e.g., https://i.imgur.com/xxxx.png)" value="https://i.imgur.com/aKvo1jQ.png" />
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-content" id="theme">
+            <div class="content-grid">
+              <div class="option">
+                <span>Cell Color</span>
+                <input type="color" id="cellColorSelect" value="#0a414e">
+                <button id="cellColorDefaultBtn">Default</button>
+              </div>
+              <div class="option">
+                <span>Multibox Ring Color</span>
+                <input type="color" id="multiboxRingColor" value="#0a414e">
+              </div>
+              <div class="option">
+                <span>Arrow Color</span>
+                <input type="color" id="arrowColor" value="#FFFFFF">
+              </div>
+              <div class="option">
+                <span>Arrow Size: <span class="slider-value" id="arrowSizeValue">430px</span></span>
+                <input type="range" class="setting-slider" id="arrowSize" min="50" max="1000" value="430">
+              </div>
+              <div class="option" id="cursorLinesColorOption" style="display: none;">
+                <span>Cursor line color</span>
+                <input type="color" id="cursorLinesColor" value="#FFFFFF">
+              </div>
+              <div class="option">
+                <span>Button Hover</span>
+                <input type="color" id="buttonHover" value="#3a3a3a">
+              </div>
+              <div class="option">
+                <span>Text Color</span>
+                <input type="color" id="textColor" value="#ffffff">
+              </div>
+              <div class="option">
+                <span>Accent Color</span>
+                <input type="color" id="accentColor" value="#3b82f6">
+              </div>
+              <div class="option">
+                <span>Menu Width: <span class="slider-value" id="menuWidthValue">1200px</span></span>
+                <input type="range" class="setting-slider" id="menuWidth" min="400" max="2000" value="1200">
+              </div>
+              <div class="option">
+                <span>Menu Height: <span class="slider-value" id="menuHeightValue">492px</span></span>
+                <input type="range" class="setting-slider" id="menuHeight" min="400" max="1000" value="492">
+              </div>
+              <div class="option">
+                <span>Border Radius: <span class="slider-value" id="borderRadiusValue">0px</span></span>
+                <input type="range" class="setting-slider" id="borderRadius" min="0" max="50" value="0">
+              </div>
+              <div class="option">
+                <button id="resetThemeBtn">Reset Theme</button>
+                <button id="resetThemeBtnNew" style="margin-left: 10px; background: #ff6b6b;">Fix Reset (1200x492x0)</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-content" id="controls">
+            <div class="content-grid">
+              <div class="option">
+                <span>Macro feed</span>
+                <input id="macroFeedKey" class="hotkey-input" value="KeyE" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Split</span>
+                <input id="splitKey" class="hotkey-input" value="Space" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Doublesplit</span>
+                <input id="doubleSplitKey" class="hotkey-input" value="KeyQ" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Tricksplit</span>
+                <input id="tricksplitKey" class="hotkey-input" value="ShiftLeft" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Switch player</span>
+                <input id="switchPlayerkey" class="hotkey-input" value="Tab" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Toggle background</span>
+                <input id="toggleBackgroundKey" class="hotkey-input" value="KeyB" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Toggle ChatHud</span>
+                <input id="toggleChatHUDKey" class="hotkey-input" value="KeyP" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Line split</span>
+                <input id="lineSplitKey" class="hotkey-input" value="KeyF" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Start recording</span>
+                <input id="startRecordingKey" class="hotkey-input" value="KeyK" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="option">
+                <span>Stop recording</span>
+                <input id="stopRecordingKey" class="hotkey-input" value="KeyL" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-content" id="mouse">
+            <div class="content-grid">
+              <div class="option">
+                <span>Left click</span>
+                <select class="mouseActions" id="leftClick">
+                  <option value="noAction">No action</option>
+                  <option value="macroFeed">Macro Feed</option>
+                  <option value="split">Split</option>
+                  <option value="doubleSplit">Doublesplit</option>
+                  <option value="tricksplit">Tricksplit</option>
+                  <option value="lineSplit">Line split</option>
+                  <option value="switchPlayer">Switch player</option>
+                </select>
+              </div>
+              <div class="option">
+                <span>Middle click</span>
+                <select class="mouseActions" id="middleClick">
+                  <option selected value="noAction">No action</option>
+                  <option value="macroFeed">Macro Feed</option>
+                  <option value="split">Split</option>
+                  <option value="doubleSplit">Doublesplit</option>
+                  <option value="tricksplit">Tricksplit</option>
+                  <option value="lineSplit">Line split</option>
+                  <option value="switchPlayer">Switch player</option>
+                </select>
+              </div>
+              <div class="option">
+                <span>Right click</span>
+                <select class="mouseActions" id="rightClick">
+                  <option selected value="noAction">No action</option>
+                  <option value="macroFeed">Macro Feed</option>
+                  <option value="split">Split</option>
+                  <option value="doubleSplit">Doublesplit</option>
+                  <option value="tricksplit">Tricksplit</option>
+                  <option value="lineSplit">Line split</option>
+                  <option value="switchPlayer">Switch player</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Gallery Display -->
+  <div id="gallery-display" class="pointer-events-all hidden">
+    <div id="gallery-display-center">
+      <div id="gallery">
+        <div id="settings-close-btn">✘</div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+</body>
+</html>
